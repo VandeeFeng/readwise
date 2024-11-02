@@ -6,6 +6,7 @@ from typing import List, Dict, Optional
 from pathlib import Path
 import re
 from github import Github
+from github.Repository import Repository
 
 class ReadwiseAPI:
     """Readwise API client for exporting highlights with smart update capability and GitHub integration"""
@@ -21,6 +22,10 @@ class ReadwiseAPI:
         if not self.github_token:
             raise ValueError("GITHUB_TOKEN not found in environment variables")
         
+        # Get repository from GitHub Actions environment variable
+        self.github_repo = os.environ.get("GITHUB_REPOSITORY")
+        if not self.github_repo:
+            raise ValueError("Not running in GitHub Actions environment (GITHUB_REPOSITORY not found)")
 
         # Initialize GitHub client
         self.github = Github(self.github_token)
