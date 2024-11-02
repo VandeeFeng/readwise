@@ -13,7 +13,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
       with:
-        token: ${{ secrets.GITHUB_TOKEN }}
+        token: ${{ secrets.READWISE }}
         fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
@@ -27,7 +27,7 @@ jobs:
 
     - name: Run update script
       env:
-       GITHUB_TOKEN: ${{ secrets.READWISE }}
+       GITHUB_TOKEN: ${{ vars.READWISE_KEY }}
       run: python readwise.py
 
     - name: Commit and push if changes
