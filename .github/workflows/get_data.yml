@@ -5,8 +5,24 @@ on:
     # 每天凌晨 1 点运行 (UTC 时间，对应北京时间 9 点)
     - cron: '0 1 * * *'
   
-  # 支持手动触发
+  # 支持手动触发，并添加输入参数
   workflow_dispatch:
+    inputs:
+      start_date:
+        description: 'Start date (YYYY-MM-DD, e.g., 2024-01-01)'
+        required: false
+        type: string
+        default: ''
+      end_date:
+        description: 'End date (YYYY-MM-DD, leave empty for current date)'
+        required: false
+        type: string
+        default: ''
+      all_time:
+        description: 'Fetch all highlights (overrides date range if selected)'
+        type: boolean
+        required: false
+        default: false
 
 # 添加完整的权限配置
 permissions:
