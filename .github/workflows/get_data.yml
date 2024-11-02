@@ -8,6 +8,10 @@ on:
   # 支持手动触发
   workflow_dispatch:
 
+# 添加完整的权限配置
+permissions:
+  contents: write      # 仓库内容的读写权限
+
 jobs:
   sync:
     runs-on: ubuntu-latest
