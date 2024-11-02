@@ -8,12 +8,13 @@ on:
 jobs:
   update-articles:
     runs-on: ubuntu-latest
-
+    
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository
+      uses: actions/checkout@v3
       with:
-        ref: ${{ github.head_ref }}
-
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0
     - name: Set up Python
       uses: actions/setup-python@v2
       with:
