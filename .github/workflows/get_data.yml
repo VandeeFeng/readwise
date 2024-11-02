@@ -1,38 +1,58 @@
-name: Update Readwise Articles
+name: Sync Readwise Articles
 
 on:
   schedule:
-    - cron: '0 0 * * *'  # 运行在每天 UTC 0:00
-  workflow_dispatch:  # 允许手动触发
+    # 每天凌晨 1 点运行 (UTC 时间，对应北京时间 9 点)
+    - cron: '0 1 * * *'
+  
+  # 支持手动触发
+  workflow_dispatch:
 
 jobs:
-  update-articles:
+  sync:
     runs-on: ubuntu-latest
     
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v3
-      with:
-        token: ${{ secrets.READWISE }}
-        fetch-depth: 0
+      uses: actions/checkout@v4
+    
     - name: Set up Python
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v5
       with:
-        python-version: '3.x'
-
+        python-version: '3.10'
+        cache: 'pip'
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install requests
-
-    - name: Run update script
+        pip install requests PyGithub
+    
+    - name: Run sync script
       env:
-       GITHUB_TOKEN: ${{ vars.READWISE_KEY }}
-      run: python readwise.py
-
-    - name: Commit and push if changes
+        READWISE_TOKEN: ${{ secrets.READWISE_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: python readwise_sync.py
+    
+    - name: Check for changes
+      id: verify-changed-files
       run: |
-        git config --global user.name 'GitHub Action'
-        git config --global user.email 'action@github.com'
-        git add -A
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Update articles $(date +'%Y-%m-%d')" && git push)
+        if [ -n "$(git status --porcelain)" ]; then
+          echo "changes_found=true" >> $GITHUB_OUTPUT
+        else
+          echo "changes_found=false" >> $GITHUB_OUTPUT
+        fi
+    
+    - name: Commit changes
+      if: steps.verify-changed-files.outputs.changes_found == 'true'
+      run: |
+        git config --local user.email "github-actions[bot]@users.noreply.github.com"
+        git config --local user.name "github-actions[bot]"
+        git add articles.json last_update.json
+        git commit -m "Update Readwise articles [skip ci]"
+        
+    - name: Push changes
+      if: steps.verify-changed-files.outputs.changes_found == 'true'
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: ${{ github.ref }}
