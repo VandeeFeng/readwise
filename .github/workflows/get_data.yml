@@ -1,5 +1,4 @@
 name: Sync Readwise Articles
-
 on:
   schedule:
     # 每天凌晨 1 点运行 (UTC 时间，对应北京时间 9 点)
@@ -24,7 +23,6 @@ on:
         required: false
         default: false
 
-# 添加完整的权限配置
 permissions:
   contents: write      # 仓库内容的读写权限
 
@@ -52,6 +50,9 @@ jobs:
       env:
         READWISE_TOKEN: ${{ secrets.READWISE_TOKEN }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        INPUT_START_DATE: ${{ github.event.inputs.start_date }}
+        INPUT_END_DATE: ${{ github.event.inputs.end_date }}
+        INPUT_ALL_TIME: ${{ github.event.inputs.all_time }}
       run: python readwise_sync.py
     
     - name: Check for changes
