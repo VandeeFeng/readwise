@@ -27,7 +27,7 @@ jobs:
     - name: Run update script
       env:
        GITHUB_TOKEN: ${{ secrets.READWISE }}
-      run: python readwise_export.py
+      run: python readwise.py
 
     - name: Commit and push if changes
       run: |
