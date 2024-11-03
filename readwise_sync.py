@@ -113,21 +113,48 @@ class ReadwiseAPI:
         content = self.get_file_content(self.last_update_file)
         if content:
             try:
-                data = json.loads(content)
-                return datetime.strptime(data['last_update'], '%Y-%m-%d')
+                updates = json.loads(content)
+                if isinstance(updates, list):
+                    return datetime.strptime(updates[-1]['last_update'], '%Y-%m-%d')
+                # 处理旧格式
+                elif isinstance(updates, dict):
+                    return datetime.strptime(updates['last_update'], '%Y-%m-%d')
             except Exception as e:
                 print(f"Error parsing last update file: {e}")
                 return None
         return None
 
     def save_last_update_to_github(self):
-        """Save current date as last update date to GitHub"""
+        """Save current date as a new entry in the updates array"""
         current_date = datetime.now().strftime('%Y-%m-%d')
-        content = json.dumps({'last_update': current_date})
+        
+        # Get existing content
+        content = self.get_file_content(self.last_update_file)
+        if content:
+            try:
+                updates = json.loads(content)
+                # 如果是旧格式，转换为列表格式
+                if isinstance(updates, dict):
+                    updates = [updates]
+                elif not isinstance(updates, list):
+                    updates = []
+            except:
+                updates = []
+        else:
+            updates = []
+        
+        # 添加新的更新记录
+        new_update = {"last_update": current_date}
+        
+        # 检查是否已经存在相同的更新
+        if not updates or updates[-1]['last_update'] != current_date:
+            updates.append(new_update)
+        
+        # 保存更新后的内容
         self.update_file(
             path=self.last_update_file,
-            content=content,
-            message="Update last sync date"
+            content=json.dumps(updates, indent=2),
+            message="Update sync history"
         )
 
     def load_existing_articles_from_github(self) -> List[Dict]:
@@ -165,17 +192,14 @@ class ReadwiseAPI:
             all_time: If True, fetch all highlights regardless of dates
         """
         if all_time:
-            # 当选择 all_time 时，强制获取所有 highlights，忽略上次更新时间
             print("Fetching all highlights from the beginning")
             highlights_data = self.get_highlights()
         elif start_date:
-            # 如果指定了开始日期，使用指定的日期范围
             start_datetime = datetime.strptime(start_date, '%Y-%m-%d')
             end_datetime = datetime.strptime(end_date, '%Y-%m-%d') if end_date else datetime.now()
             print(f"Fetching highlights from {start_date} to {end_date or 'now'}")
             highlights_data = self.get_highlights(start_date=start_datetime, end_date=end_datetime)
         else:
-            # 使用上次更新时间的增量更新逻辑
             last_update = self.load_last_update_from_github()
             if last_update:
                 days_since_update = (datetime.now() - last_update).days
@@ -210,7 +234,7 @@ class ReadwiseAPI:
         )
 
         # Update the last update date
-        if not start_date and not all_time:  # 只有在非指定日期范围和非全量更新的情况下才更新最后同步时间
+        if not start_date and not all_time:
             self.save_last_update_to_github()
 
         print(f"Successfully updated articles in GitHub repository")
