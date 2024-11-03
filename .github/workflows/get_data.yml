@@ -70,7 +70,7 @@ jobs:
         git config --local user.email "github-actions[bot]@users.noreply.github.com"
         git config --local user.name "github-actions[bot]"
         git add articles.json last_update.json
-        git commit -m "Update Readwise articles [skip ci]"
+        git commit -m "Update Readwise articles [skip ci]" || echo "No changes to commit"
         
     - name: Push changes
       if: steps.verify-changed-files.outputs.changes_found == 'true'
